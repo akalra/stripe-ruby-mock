@@ -69,6 +69,20 @@ shared_examples 'Customer API' do
     expect(customer.subscriptions.first.customer).to eq(customer.id)
   end
 
+  it 'creates a customer, and then subscribes to a plan' do
+    plan = stripe_helper.create_plan(id: 'silver')
+    customer = Stripe::Customer.create(id: 'test_cus_plan', source: gen_card_tk)
+    customer.update_subscription(plan: 'silver')
+
+    customer = Stripe::Customer.retrieve('test_cus_plan')
+    expect(customer.subscriptions.count).to eq(1)
+    expect(customer.subscriptions.data.length).to eq(1)
+
+    expect(customer.subscriptions).to_not be_nil
+    expect(customer.subscriptions.first.plan.id).to eq('silver')
+    expect(customer.subscriptions.first.customer).to eq(customer.id)
+  end
+
   it "creates a customer with a plan (string/symbol agnostic)" do
     plan = stripe_helper.create_plan(id: 'string_id')
     customer = Stripe::Customer.create(id: 'test_cus_plan', source: gen_card_tk, :plan => :string_id)
